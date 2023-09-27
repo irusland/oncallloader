@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from oncall_client.settings import OncallSettings
 from pydantic import BaseModel, SecretStr
 from requests import Session
@@ -9,10 +11,20 @@ class LoginRequest(BaseModel):
 
 
 class Contacts(BaseModel):
-    email: str
-    sms: str
-    call: str
-    slack: str
+    email: str | None = None
+    sms: str | None = None
+    call: str | None = None
+    slack: str | None = None
+
+
+class UpdateUserRequest(BaseModel):
+    contacts: Contacts | None = None
+    name: str | None = None
+    full_name: str | None = None
+    time_zone: str | None = None
+    photo_url: str | None = None
+    active: int | None = None
+
 
 
 class LoginResponse(BaseModel):
@@ -66,3 +78,34 @@ class OncallClient:
         )
 
         response.raise_for_status()
+
+    def get_users(self) -> list[str]:
+        response = self._session.get(
+            self._settings.users_endpoint,
+            headers=self._auth_headers,
+        )
+        return response.json()
+
+    def create_user(self, request: UpdateUserRequest):
+        username = request.name
+        response = self._session.post(
+            f'{self._settings.users_endpoint}',
+            json={'name': username},
+            headers=self._auth_headers,
+        )
+        response.raise_for_status()
+        json = request.model_dump(exclude_unset=True, exclude={'name'})
+        response = self._session.put(
+            f'{self._settings.users_endpoint}/{username}',
+            json=json,
+            headers=self._auth_headers,
+        )
+        response.raise_for_status()
+
+    def get_user(self, username: str) -> list[str]:
+        response = self._session.get(
+            f'{self._settings.users_endpoint}/{username}',
+            headers=self._auth_headers,
+        )
+        return response.json()
+

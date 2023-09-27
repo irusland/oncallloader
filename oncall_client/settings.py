@@ -10,6 +10,7 @@ class OncallSettings(BaseSettings):
 
     teams_path: str = '/api/v0/teams'
     login_path: str = '/login'
+    users_path: str = '/api/v0/users'
 
     @property
     def teams_endpoint(self) -> str:
@@ -18,6 +19,10 @@ class OncallSettings(BaseSettings):
     @property
     def login_endpoint(self) -> str:
         return self.url + self.login_path
+
+    @property
+    def users_endpoint(self) -> str:
+        return self.url + self.users_path
 
     class Config:
         env_prefix = 'ONCALL_SETTINGS_'
