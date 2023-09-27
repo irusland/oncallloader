@@ -56,6 +56,7 @@ def convert_datetime_to_seconds(date: datetime) -> int:
 class Role(str, Enum):
     PRIMARY = 'primary'
     SECONDARY = 'secondary'
+    VACATION = 'vacation'
 
 
 class CreateEventRequest(BaseModel):
@@ -157,15 +158,12 @@ class OncallClient:
                 "name": user_name,
             },
         )
-        print(response.text)
         response.raise_for_status()
         return response.json()
 
     def create_event(self, request: CreateEventRequest) -> None:
-        print(request.model_dump(mode='json'))
         response = self._session.post(
             self._settings.events_endpoint,
             json=request.model_dump(mode='json'),
         )
-        print(response.text)
         response.raise_for_status()
