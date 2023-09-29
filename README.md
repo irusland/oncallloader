@@ -1,5 +1,8 @@
 # oncallloader 
 
+<img src="https://github.com/irusland/oncallloader/assets/49832869/f0f8968b-baa5-4506-8b83-9862e4b792ee" alt="logo" style="width:200px;"/>
+
+
 ## Usage
 
 ### see examples in [scripts](scripts) folder
