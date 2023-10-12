@@ -9,7 +9,8 @@ from oncall_client.deps import get_container
 
 def main():
     client: OncallClient = get_container().resolve(OncallClient)
-    client.login()
+    pprint(client.login())
+
     team_name = 'teamname' + uuid.uuid1().hex
     user_name = 'irusland-' + uuid.uuid1().hex
     roster_name = 'main'

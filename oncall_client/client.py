@@ -1,8 +1,14 @@
 from datetime import datetime
 from enum import Enum
+from functools import wraps
+from http import HTTPStatus
+from http.client import HTTPException
 from pprint import pprint
-from typing import Any
+from typing import Any, Callable
 
+import requests.exceptions
+
+from exporter.metrics_collector import MetricsCollector
 from oncall_client.settings import OncallSettings
 from pydantic import BaseModel, SecretStr
 from requests import Session
@@ -27,7 +33,6 @@ class UpdateUserRequest(BaseModel):
     time_zone: str | None = None
     photo_url: str | None = None
     active: int | None = None
-
 
 
 class LoginResponse(BaseModel):
@@ -74,10 +79,40 @@ class CreateEventRequest(BaseModel):
 
 
 class OncallClient:
-    def __init__(self, settings: OncallSettings):
+    def __init__(self, settings: OncallSettings, metrics_collector: MetricsCollector):
         self._settings = settings
         self._session = Session()
         self._auth_headers = {}
+        self._metrics_collector = metrics_collector
+
+        self.login = self._with_status(self.login, self._settings.login_endpoint)
+        self.get_teams = self._with_status(self.get_teams, self._settings.teams_endpoint)
+        self.get_team = self._with_status(self.get_team, self._settings.teams_endpoint)
+        self.search_teams = self._with_status(self.search_teams, self._settings.teams_endpoint)
+        self.create_team = self._with_status(self.create_team, self._settings.teams_endpoint)
+        self.get_users = self._with_status(self.get_users, self._settings.users_endpoint)
+        self.get_user = self._with_status(self.get_user, self._settings.users_endpoint)
+        self.create_user = self._with_status(self.create_user, self._settings.users_endpoint)
+        self.create_roster = self._with_status(self.create_roster, f'{self._settings.teams_endpoint}/team/rosters')
+        self.create_event = self._with_status(self.create_event, self._settings.events_endpoint)
+        self.search_events = self._with_status(self.search_events, self._settings.events_endpoint)
+
+    def _with_status(self, method: Callable, path: str) -> Callable:
+        @wraps(method)
+        def _wrapped(*args, **kwargs):
+            try:
+                result = method(*args, **kwargs)
+            except requests.exceptions.RequestException as e:
+                if e.response is None:
+                    status = e.__class__.__name__
+                else:
+                    status = e.response.status_code
+                self._metrics_collector.api_request_statuses.labels(path=path, status=status).inc()
+                raise e
+            else:
+                self._metrics_collector.api_request_statuses.labels(path=path, status=HTTPStatus.OK).inc()
+                return result
+        return _wrapped
 
     def login(self) -> LoginResponse:
         request = LoginRequest(
@@ -100,6 +135,13 @@ class OncallClient:
     def get_team(self, team_name: str) -> dict[str, Any]:
         response = self._session.get(
             f'{self._settings.teams_endpoint}/{team_name}'
+        )
+        return response.json()
+
+    def search_teams(self, team_name: str) -> list[str]:
+        response = self._session.get(
+            self._settings.teams_endpoint,
+            params={'name__contains': team_name},
         )
         return response.json()
 
@@ -167,3 +209,14 @@ class OncallClient:
             json=request.model_dump(mode='json'),
         )
         response.raise_for_status()
+
+    def search_events(self, team: str, start_date: datetime) -> dict[str, Any]:
+        response = self._session.get(
+            self._settings.events_endpoint,
+            params={
+                'team': team,
+                'start__gt': convert_datetime_to_seconds(start_date)
+            }
+        )
+        response.raise_for_status()
+        return response.json()
