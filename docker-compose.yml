@@ -1,0 +1,12 @@
+version: '2'
+
+services:
+  oncalloader:
+    build: .
+    image: irusland/oncalloader:v5
+    environment:
+      ONCALL_SETTINGS_URL: http://localhost:8080
+      ONCALL_SETTINGS_USERNAME: root
+      ONCALL_SETTINGS_PASSWORD: 1234
+      PROBER_SETTINGS_METRICS_ENDPOINT: http://localhost:8888/metrics
+    network_mode: bridge

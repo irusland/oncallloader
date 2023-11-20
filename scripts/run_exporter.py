@@ -11,6 +11,10 @@ def main():
     metric_scraper.run_forever()
 
 
-if __name__ == '__main__':
+def run():
     load_dotenv()
     main()
+
+
+if __name__ == '__main__':
+    run()

@@ -1,4 +1,4 @@
-from prometheus_client import Summary, Counter, Histogram
+from prometheus_client import Summary, Counter, Histogram, Gauge
 
 
 class MetricsCollector:
@@ -7,3 +7,8 @@ class MetricsCollector:
         self.search_teams_requests_success = Counter('search_teams_requests_success', 'Number of successful teams searches')
         self.get_team_schedule_requests = Histogram('get_team_schedule_requests', 'Histogram of search events request times')
         self.api_request_statuses = Counter('api_request_statuses', 'Api request statuses', labelnames=('path', 'status'))
+        self.get_metrics_success_requests = Counter('get_metrics_success_requests', 'Успешное получение метрик oncall')
+        self.get_metrics_requests_total = Counter('get_metrics_requests_total', 'Получение метрик oncall всего')
+
+        self.sla = Gauge('sla', 'SLA', labelnames=('indicator',))
+
