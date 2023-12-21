@@ -48,27 +48,27 @@ class Slaser:
             model = self._query(query=self._settings.schedule_indicator_query, model=IndicatorResponse)
             _, raw_value = model.data.result[0].value
             current_value = float(raw_value)
-            self._collector.sla.labels(indicator='schedule').set(1 if current_value < self._settings.schedule_sla else 0)
         except:
-            pass
+            current_value = self._settings.schedule_sla
+        self._collector.sla.labels(indicator='schedule').set(1 if current_value < self._settings.schedule_sla else 0)
 
     def _update_get_metrics(self):
         try:
             model = self._query(query=self._settings.get_metrics_indicator_query, model=IndicatorResponse)
             _, raw_value = model.data.result[0].value
             current_value = float(raw_value)
-            self._collector.sla.labels(indicator='metrics').set(1 if current_value > self._settings.metrics_sla else 0)
         except:
-            pass
+            current_value = self._settings.metrics_sla
+        self._collector.sla.labels(indicator='metrics').set(1 if current_value > self._settings.metrics_sla else 0)
 
     def _update_statuses(self):
         try:
             model = self._query(query=self._settings.statuses_indicator_query, model=IndicatorResponse)
             _, raw_value = model.data.result[0].value
             current_value = float(raw_value)
-            self._collector.sla.labels(indicator='statuses').set(1 if current_value > self._settings.statuses_sla else 0)
         except:
-            pass
+            current_value = self._settings.statuses_sla
+        self._collector.sla.labels(indicator='statuses').set(1 if current_value > self._settings.statuses_sla else 0)
 
     def _query(self, query: str, model: Type[BaseModel]) -> BaseModel:
         response = self._session.get(
