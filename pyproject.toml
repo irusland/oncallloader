@@ -4,6 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Ruslan Sirazhetdinov <ruslansir@icloud.com>"]
 readme = "README.md"
+packages = [
+    {include = "scripts/run_exporter.py"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -16,6 +19,8 @@ pydantic-yaml = "^1.2.0"
 python-dateutil = "^2.8.2"
 prometheus-client = "^0.17.1"
 
+[tool.poetry.scripts]
+prober = "scripts.run_exporter:run"
 
 [build-system]
 requires = ["poetry-core"]

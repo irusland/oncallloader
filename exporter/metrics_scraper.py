@@ -5,7 +5,9 @@ import time
 from prometheus_client import start_http_server
 
 from exporter.metrics_collector import MetricsCollector
+from exporter.prober import Prober
 from exporter.settings import ExporterSettings
+from exporter.slaser import Slaser
 from oncall_client.client import OncallClient
 
 logger = logging.getLogger(__name__)
@@ -16,11 +18,15 @@ class MetricScraper:
         self,
         exporter_settings: ExporterSettings,
         oncall_client: OncallClient,
-        metrics_collector: MetricsCollector
+        metrics_collector: MetricsCollector,
+        prober: Prober,
+        slaser: Slaser,
     ):
         self._exporter_settings = exporter_settings
         self._oncall_client = oncall_client
         self._metrics_collector = metrics_collector
+        self._prober = prober
+        self._slaser = slaser
 
     def run_forever(self):
         start_http_server(self._exporter_settings.port)
@@ -35,6 +41,8 @@ class MetricScraper:
     def _scrape(self):
         self._scrape_search_teams()
         self._scrape_search_events()
+        self._probe()
+        self._slaser.update()
 
     def _scrape_search_teams(self):
         try:
@@ -60,3 +68,6 @@ class MetricScraper:
             self._metrics_collector.get_team_schedule_requests.observe(
                 end_time-start_time
             )
+
+    def _probe(self):
+        self._prober.update()
